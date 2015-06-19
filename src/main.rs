@@ -1,5 +1,6 @@
 use std::net::TcpStream;
 use std::io::prelude::*;
+use std::str;
 
 fn main() {
 	let mut connection = TcpStream::connect("127.0.0.1:6667").unwrap();
@@ -14,6 +15,7 @@ fn main() {
 			Some(x) => {
 				let next_char = x.unwrap();
 				command_buf[buf_ind] = next_char;
+				buf_ind = buf_ind + 1;
 				if command_end && next_char == 10 {
 					parse_command(&command_buf[0..(buf_ind-2)]);
 					buf_ind = 0;
@@ -23,7 +25,6 @@ fn main() {
 				} else {
 					command_end = false;
 				}
-				buf_ind = buf_ind + 1;
 				if buf_ind >= COMMAND_BUF_SIZE {
 					buf_ind = 0;
 				}
@@ -34,5 +35,5 @@ fn main() {
 }
 
 fn parse_command(command: &[u8]) {
-	println!("Command Complete");
+	println!("{}", str::from_utf8(command).unwrap());
 }
