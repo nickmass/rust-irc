@@ -3,9 +3,11 @@ use std::io::prelude::*;
 use std::str;
 
 fn main() {
-	let mut connection = TcpStream::connect("127.0.0.1:6667").unwrap();
-	let _ = connection.write(b"Hello World\n");
-	let mut bytes = connection.bytes();
+	let connection = TcpStream::connect("127.0.0.1:6667");
+	if connection.is_err() {
+		return;
+	}
+	let mut bytes = connection.unwrap().bytes();
 	const COMMAND_BUF_SIZE: usize = 4096;
 	let mut command_buf: [u8; COMMAND_BUF_SIZE] = [0; COMMAND_BUF_SIZE];
 	let mut buf_ind = 0;
@@ -13,6 +15,9 @@ fn main() {
 	loop {
 		match bytes.next() {
 			Some(x) => {
+				if x.is_err() {
+					break;
+				}
 				let next_char = x.unwrap();
 				command_buf[buf_ind] = next_char;
 				buf_ind = buf_ind + 1;
@@ -25,6 +30,7 @@ fn main() {
 				} else {
 					command_end = false;
 				}
+
 				if buf_ind >= COMMAND_BUF_SIZE {
 					buf_ind = 0;
 				}
@@ -35,5 +41,9 @@ fn main() {
 }
 
 fn parse_command(command: &[u8]) {
-	println!("{}", str::from_utf8(command).unwrap());
+	let command_str = str::from_utf8(command);
+	if command_str.is_err() {
+		return;
+	}
+	println!("{}", command_str.unwrap());
 }
