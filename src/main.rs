@@ -84,12 +84,12 @@ fn main() {
 	let mut writer = IrcWriter::new(&connection).unwrap();
 	
 	thread::spawn(move || {
-		let mut stdin = io::stdin();
-		let mut buf = String::new();
-		loop {
-			let _= stdin.read_line(&mut buf).unwrap();
-			writer.write(&buf.as_bytes());
-		}
+		let stdin = io::stdin();
+        let stdin_lock = stdin.lock();
+        for in_line in stdin_lock.lines() {
+            writer.write(in_line.unwrap().as_bytes());
+            writer.write(b"\n");
+        }
 	});
 	
 	for irc_msg in reader {
