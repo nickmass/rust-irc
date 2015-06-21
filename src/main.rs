@@ -32,34 +32,27 @@ impl Iterator for IrcReader {
 		let mut buf_ind = 0;
 		let mut command_end = false;
 		let stream = &self.stream;
-		let mut bytes = stream.bytes();
-		loop {
-			match bytes.next() {
-				Some(x) => {
-					if x.is_err() {
-						return None;
-					}
-					let next_char = x.unwrap();
-					command_buf[buf_ind] = next_char;
-					buf_ind = buf_ind + 1;
-					if command_end && next_char == 10 {
-						return Some(IrcMessage { msg: command_buf, length: buf_ind - 2 });
-					} else if next_char == 102 {
-						command_end = true;
-					} else {
-						command_end = false;
-					}
+		let bytes = stream.bytes();
+		for x in bytes {
+			if x.is_err() {
+				return None;
+			}
+			let next_char = x.unwrap();
+			command_buf[buf_ind] = next_char;
+			buf_ind = buf_ind + 1;
+			if command_end && next_char == 10 {
+				return Some(IrcMessage { msg: command_buf, length: buf_ind - 2 });
+			} else if next_char == 102 {
+				command_end = true;
+			} else {
+				command_end = false;
+			}
 
-					if buf_ind >= COMMAND_BUF_SIZE {
-						buf_ind = 0;
-					}
-
-				},
-				None => {
-					return None;
-				}
+			if buf_ind >= COMMAND_BUF_SIZE {
+				buf_ind = 0;
 			}
 		}
+		None
 	}
 }
 
