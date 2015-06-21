@@ -42,7 +42,7 @@ impl Iterator for IrcReader {
 			buf_ind = buf_ind + 1;
 			if command_end && next_char == 10 {
 				return Some(IrcMessage { msg: command_buf, length: buf_ind - 2 });
-			} else if next_char == 102 {
+			} else if next_char == 13 {
 				command_end = true;
 			} else {
 				command_end = false;
