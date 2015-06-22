@@ -17,7 +17,7 @@ struct IrcReader {
 }
 
 impl IrcReader {
-	pub fn new(base_stream: &TcpStream) -> std::io::Result<IrcReader> {
+	pub fn new(base_stream: &TcpStream) -> io::Result<IrcReader> {
 		let stream = try!(base_stream.try_clone());
 		Ok(IrcReader {
 			stream: stream,
@@ -61,7 +61,7 @@ struct IrcWriter {
 }
 
 impl IrcWriter {
-	pub fn new(base_stream: &TcpStream) -> std::io::Result<IrcWriter> {
+	pub fn new(base_stream: &TcpStream) -> io::Result<IrcWriter> {
 		let stream = try!(base_stream.try_clone());
 		Ok(IrcWriter {
 			stream: stream,
@@ -87,8 +87,11 @@ fn main() {
 		let stdin = io::stdin();
         let stdin_lock = stdin.lock();
         for in_line in stdin_lock.lines() {
-            writer.write(in_line.unwrap().as_bytes());
-            writer.write(b"\n");
+            let _ = in_line.and_then(|x| {
+                writer.write(x.as_bytes());
+                writer.write(b"\n");
+                Ok(x)
+            });
         }
 	});
 	
