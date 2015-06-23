@@ -85,14 +85,14 @@ fn main() {
 	
 	thread::spawn(move || {
 		let stdin = io::stdin();
-        let stdin_lock = stdin.lock();
-        for in_line in stdin_lock.lines() {
-            let _ = in_line.and_then(|x| {
-                writer.write(x.as_bytes());
-                writer.write(b"\n");
-                Ok(x)
-            });
-        }
+		let stdin_lock = stdin.lock();
+		for in_line in stdin_lock.lines() {
+			let _ = in_line.and_then(|x| {
+				writer.write(x.as_bytes());
+				writer.write(b"\n");
+				Ok(x)
+			});
+		}
 	});
 	
 	for irc_msg in reader {
