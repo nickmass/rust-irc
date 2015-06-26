@@ -5,6 +5,8 @@ use std::thread;
 use std::str;
 use irc::IrcReader;
 use irc::IrcWriter;
+use irc::IrcMessage;
+
 
 mod irc;
 
@@ -13,23 +15,34 @@ fn main() {
 	if connection_result.is_err() {
 		return;
 	}
-	
-	let connection = connection_result.unwrap();	
+
+	let connection = connection_result.unwrap();
 	let reader = IrcReader::new(&connection).unwrap();
 	let mut writer = IrcWriter::new(&connection).unwrap();
-	
+
 	thread::spawn(move || {
 		let stdin = io::stdin();
 		let stdin_lock = stdin.lock();
 		for in_line in stdin_lock.lines() {
 			let _ = in_line.and_then(|x| {
-				writer.write(x.as_bytes());
-				writer.write(b"\n");
+
+                match str::from_utf8(x.as_bytes()).unwrap() {
+                    "user" => {
+                        writer.write(IrcMessage::test_user().message());
+                        writer.write(b"\r\n");
+                        writer.write(IrcMessage::test_nick().message());
+                        writer.write(b"\r\n");
+                    },
+                    _ => {
+                        writer.write(x.as_bytes());
+                        writer.write(b"\r\n");
+                    }
+                }
 				Ok(x)
 			});
 		}
 	});
-	
+
 	for irc_msg in reader {
 		parse_command(&irc_msg.message());
 	}

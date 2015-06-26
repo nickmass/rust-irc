@@ -1,3 +1,4 @@
+use std::str;
 use irc::COMMAND_BUF_SIZE;
 
 pub struct IrcMessage {
@@ -7,6 +8,118 @@ pub struct IrcMessage {
     command_index: usize,
     param_index: usize,
     trail_index: usize,
+}
+
+macro_rules! create_irc_message {
+    ($prefix:expr, $command:expr, [ $( $param:expr ),* ], $trailing:expr) => {{
+        let mut buf: [u8; COMMAND_BUF_SIZE] = [0; COMMAND_BUF_SIZE];
+        let mut length = 1;
+        buf[0] = b':';
+        let prefix = $prefix.as_bytes();
+        for x in length..length + prefix.len() {
+            buf[x] = prefix[x - length];
+        }
+        length = length + prefix.len();
+
+        buf[length] = b' ';
+        length = length + 1;
+
+        let command = $command.as_bytes();
+        for x in length..length + command.len() {
+            buf[x] = command[x - length];
+        }
+        length = length + command.len();
+
+        buf[length] = b' ';
+        length = length + 1;
+
+        $(
+            {
+                let param = $param.as_bytes();
+                for x in length..length + param.len() {
+                    buf[x] = param[x - length];
+                }
+                length = length + param.len();
+
+                buf[length] = b' ';
+                length = length + 1;
+            }
+        )*
+
+        buf[length] = b':';
+        length = length + 1;
+
+        let trailing = $trailing.as_bytes();
+        for x in length..length + trailing.len() {
+            buf[x] = trailing[x - length];
+        }
+        length = length + trailing.len();
+
+        IrcMessage::new(buf, length)
+    }};
+    ($command:expr, [ $( $param:expr ),* ]) => {{
+        let mut buf: [u8; COMMAND_BUF_SIZE] = [0; COMMAND_BUF_SIZE];
+        let mut length = 0;
+        let command = $command.as_bytes();
+        for x in length..length + command.len() {
+            buf[x] = command[x - length];
+        }
+        length = length + command.len();
+
+        buf[length] = b' ';
+        length = length + 1;
+
+        $(
+            {
+                let param = $param.as_bytes();
+                for x in length..length + param.len() {
+                    buf[x] = param[x - length];
+                }
+                length = length + param.len();
+
+                buf[length] = b' ';
+                length = length + 1;
+            }
+        )*
+
+        IrcMessage::new(buf, length)
+    }};
+   ($command:expr, [ $( $param:expr ),* ], $trailing:expr) => {{
+        let mut buf: [u8; COMMAND_BUF_SIZE] = [0; COMMAND_BUF_SIZE];
+        let mut length = 0;
+        let command = $command.as_bytes();
+        for x in length..length + command.len() {
+            buf[x] = command[x - length];
+        }
+        length = length + command.len();
+
+        buf[length] = b' ';
+        length = length + 1;
+
+        $(
+            {
+                let param = $param.as_bytes();
+                for x in length..length + param.len() {
+                    buf[x] = param[x - length];
+                }
+                length = length + param.len();
+
+                buf[length] = b' ';
+                length = length + 1;
+            }
+        )*
+
+        buf[length] = b':';
+        length = length + 1;
+
+        let trailing = $trailing.as_bytes();
+        for x in length..length + trailing.len() {
+            buf[x] = trailing[x - length];
+        }
+        length = length + trailing.len();
+
+        IrcMessage::new(buf, length)
+    }};
 }
 
 impl IrcMessage {
@@ -39,7 +152,7 @@ impl IrcMessage {
             }
         }
 
-        let new_message = IrcMessage { 
+        let new_message = IrcMessage {
             message: message,
             length: length,
             has_prefix: has_prefix,
@@ -69,7 +182,7 @@ impl IrcMessage {
         if self.param_index == 0 {
             return None;
         }
-        
+
         let mut last_param_index = self.param_index;
         let mut param_count = 0;
         let mut x = last_param_index;
@@ -78,7 +191,7 @@ impl IrcMessage {
                 if param_count == index {
                     return Some(&self.message[last_param_index..x]);
                 }
-                
+
                 param_count = param_count + 1;
                 last_param_index = x + 1;
             }
@@ -93,12 +206,28 @@ impl IrcMessage {
         }
         Some(&self.message[self.trail_index..self.length])
     }
+
+    pub fn dump(&self) {
+        let dump_str = str::from_utf8(&self.message[0..self.length]);
+        if dump_str.is_err() {
+            println!("Invalid Message");
+        }
+        println!("{}", dump_str.unwrap());
+    }
+
+    pub fn test_nick() -> IrcMessage {
+        create_irc_message!("NICK", ["nickmass"])
+    }
+
+    pub fn test_user() -> IrcMessage {
+        create_irc_message!("USER", ["nickmass", "8", "*"], "Nick Massey")
+    }
 }
 
 #[cfg(test)]
 mod tests {
     const COMMAND_BUF_SIZE: usize = 4096;
-    use std::str; 
+    use std::str;
     #[test]
     fn parse_message() {
         let msg = super::IrcMessage::new(load_message(b":syrk!kalt@millennium.stealth.net QUIT :Gone to have lunch"), 58);
