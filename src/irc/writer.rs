@@ -1,17 +1,14 @@
-use std::net::TcpStream;
-use std::io;
 use std::io::prelude::*;
 
-pub struct IrcWriter {
-    stream: TcpStream,
+pub struct IrcWriter<T: Write> {
+    stream: T,
 }
 
-impl IrcWriter {
-    pub fn new(base_stream: &TcpStream) -> io::Result<IrcWriter> {
-        let stream = try!(base_stream.try_clone());
-        Ok(IrcWriter {
+impl<T: Write> IrcWriter<T> {
+    pub fn new(stream: T) -> IrcWriter<T> {
+        IrcWriter {
             stream: stream,
-        })
+        }
     }
 
     pub fn write(&mut self, bytes: &[u8]) {

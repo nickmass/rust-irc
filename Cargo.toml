@@ -2,3 +2,5 @@
 name = "rust-irc"
 version = "0.1.0"
 authors = ["Nick Massey <nickmass@nickmass.com>"]
+[dependencies]
+openssl = "0.6.3"
