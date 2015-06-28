@@ -21,8 +21,8 @@ fn main() {
 	let connection = connection_result.unwrap();
 	let ssl_context = SslContext::new(SslMethod::Sslv23);
 	let ssl_stream = SslStream::new(&ssl_context.unwrap(), connection).unwrap();
-	let mut reader_connection = ssl_stream.try_clone().unwrap();
-	let reader = IrcReader::new(&mut reader_connection);
+	let reader_connection = ssl_stream.try_clone().unwrap();
+	let reader = IrcReader::new(reader_connection);
 	let writer_connection = ssl_stream.try_clone().unwrap();
 	let mut writer = IrcWriter::new(writer_connection);
 

@@ -2,28 +2,27 @@ use std::io::prelude::*;
 use irc::IrcMessage;
 use irc::COMMAND_BUF_SIZE;
 
-pub struct IrcReader<'a, T: 'a + Read> {
-    stream: &'a mut T,
+pub struct IrcReader<T: Read> {
+    stream: T,
 }
 
-impl<'a, T: 'a + Read> IrcReader<'a, T> {
-    pub fn new(stream: &mut T) -> IrcReader<T> {
+impl<T: Read> IrcReader<T> {
+    pub fn new(stream: T) -> IrcReader<T> {
         IrcReader {
             stream: stream
         }
     }
 }
 
-impl<'a, T: 'a + Read> Iterator for IrcReader<'a, T> {
+impl<T: Read> Iterator for IrcReader<T> {
     type Item = IrcMessage;
     fn next(&mut self) -> Option<IrcMessage> {
         let mut command_buf: [u8; COMMAND_BUF_SIZE] = [0; COMMAND_BUF_SIZE];
         let mut buf_ind = 0;
         let mut command_end = false;
-        let stream = &mut self.stream;
         let mut read_byte: [u8; 1] = [0; 1];
         loop {
-            let read_res = stream.read(&mut read_byte);
+            let read_res = self.stream.read(&mut read_byte);
             if read_res.is_err() {
                 break;
             }
