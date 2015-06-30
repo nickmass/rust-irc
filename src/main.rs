@@ -34,10 +34,8 @@ fn main() {
 
                 match str::from_utf8(x.as_bytes()).unwrap() {
                     "user" => {
-                        writer.write(IrcMessage::test_user().message());
-                        writer.write(b"\r\n");
-                        writer.write(IrcMessage::test_nick().message());
-                        writer.write(b"\r\n");
+                        writer.send(&IrcMessage::test_user());
+                        writer.send(&IrcMessage::test_nick());
                     },
                     _ => {
                         writer.write(x.as_bytes());
