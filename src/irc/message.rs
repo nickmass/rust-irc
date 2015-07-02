@@ -12,10 +12,11 @@ pub struct IrcMessage {
 
 macro_rules! create_irc_message {
     ($prefix:expr, $command:expr, [ $( $param:expr ),* ], $trailing:expr) => {{
+        const COMMAND_BUF_SIZE: usize = 4096;
         let mut buf: [u8; COMMAND_BUF_SIZE] = [0; COMMAND_BUF_SIZE];
         let mut length = 1;
         buf[0] = b':';
-        let prefix = $prefix.as_bytes();
+        let prefix = $prefix;
         for x in length..length + prefix.len() {
             buf[x] = prefix[x - length];
         }
@@ -24,7 +25,7 @@ macro_rules! create_irc_message {
         buf[length] = b' ';
         length = length + 1;
 
-        let command = $command.as_bytes();
+        let command = $command;
         for x in length..length + command.len() {
             buf[x] = command[x - length];
         }
@@ -35,7 +36,7 @@ macro_rules! create_irc_message {
 
         $(
             {
-                let param = $param.as_bytes();
+                let param = $param;
                 for x in length..length + param.len() {
                     buf[x] = param[x - length];
                 }
@@ -49,7 +50,7 @@ macro_rules! create_irc_message {
         buf[length] = b':';
         length = length + 1;
 
-        let trailing = $trailing.as_bytes();
+        let trailing = $trailing;
         for x in length..length + trailing.len() {
             buf[x] = trailing[x - length];
         }
@@ -58,9 +59,10 @@ macro_rules! create_irc_message {
         IrcMessage::new(buf, length)
     }};
     ($command:expr, [ $( $param:expr ),* ]) => {{
+        const COMMAND_BUF_SIZE: usize = 4096;
         let mut buf: [u8; COMMAND_BUF_SIZE] = [0; COMMAND_BUF_SIZE];
         let mut length = 0;
-        let command = $command.as_bytes();
+        let command = $command;
         for x in length..length + command.len() {
             buf[x] = command[x - length];
         }
@@ -71,7 +73,7 @@ macro_rules! create_irc_message {
 
         $(
             {
-                let param = $param.as_bytes();
+                let param = $param;
                 for x in length..length + param.len() {
                     buf[x] = param[x - length];
                 }
@@ -85,9 +87,10 @@ macro_rules! create_irc_message {
         IrcMessage::new(buf, length)
     }};
    ($command:expr, [ $( $param:expr ),* ], $trailing:expr) => {{
+        const COMMAND_BUF_SIZE: usize = 4096;
         let mut buf: [u8; COMMAND_BUF_SIZE] = [0; COMMAND_BUF_SIZE];
         let mut length = 0;
-        let command = $command.as_bytes();
+        let command = $command;
         for x in length..length + command.len() {
             buf[x] = command[x - length];
         }
@@ -98,7 +101,7 @@ macro_rules! create_irc_message {
 
         $(
             {
-                let param = $param.as_bytes();
+                let param = $param;
                 for x in length..length + param.len() {
                     buf[x] = param[x - length];
                 }
@@ -112,7 +115,7 @@ macro_rules! create_irc_message {
         buf[length] = b':';
         length = length + 1;
 
-        let trailing = $trailing.as_bytes();
+        let trailing = $trailing;
         for x in length..length + trailing.len() {
             buf[x] = trailing[x - length];
         }
@@ -216,11 +219,11 @@ impl IrcMessage {
     }
 
     pub fn test_nick() -> IrcMessage {
-        create_irc_message!("NICK", ["nickmass"])
+        create_irc_message!(b"NICK", [b"nickmass"])
     }
 
     pub fn test_user() -> IrcMessage {
-        create_irc_message!("USER", ["nickmass", "8", "*"], "Nick Massey")
+        create_irc_message!(b"USER", [b"nickmass", b"8", b"*"], b"Nick Massey")
     }
 }
 

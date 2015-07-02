@@ -5,6 +5,7 @@ use std::str;
 use std::io;
 use std::io::prelude::*;
 use std::net::TcpStream;
+use std::sync::mpsc::{channel, Sender, Receiver};
 use std::thread;
 use openssl::ssl::*;
 
@@ -78,6 +79,29 @@ impl IrcConnection {
 
     pub fn start(self) {
         let mut writer = self.writer;
+        let reader = self.reader;
+        let (reader_tx, writer_rx): (Sender<IrcMessage>, Receiver<IrcMessage>) = channel();
+        let ui_tx = reader_tx.clone();
+
+        thread::spawn(move || {
+            for write_cmd in writer_rx {
+                parse_command(&write_cmd.message());
+                writer.send(&write_cmd);
+            }
+        });
+
+        thread::spawn(move || {
+            for irc_msg in reader {
+                parse_command(&irc_msg.message());
+                match irc_msg.command() {
+                    b"PING" => {
+                        let _ =reader_tx.send(create_irc_message!(b"PONG", [ irc_msg.trailing().unwrap() ]));
+                    },
+                    _ => {},
+                }
+            }
+        });
+
         thread::spawn(move || {
             let stdin = io::stdin();
             let stdin_lock = stdin.lock();
@@ -85,22 +109,16 @@ impl IrcConnection {
                 let _ = in_line.and_then(|x| {
                     match str::from_utf8(x.as_bytes()).unwrap() {
                         "user" => {
-                            writer.send(&IrcMessage::test_user());
-                            writer.send(&IrcMessage::test_nick());
+                            ui_tx.send(IrcMessage::test_user());
+                            ui_tx.send(IrcMessage::test_nick());
                         },
                         _ => {
-                            writer.write(x.as_bytes());
-                            writer.write(b"\r\n");
                         }
                     }
                     Ok(x)
                 });
             }
         });
-
-        for irc_msg in self.reader {
-            parse_command(&irc_msg.message());
-        }
     }
 }
 

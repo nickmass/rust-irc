@@ -6,6 +6,7 @@ pub use self::connection::IrcConnectionOptions;
 
 pub const COMMAND_BUF_SIZE: usize = 4096;
 
+#[macro_use]
 mod message;
 mod reader;
 mod writer;
