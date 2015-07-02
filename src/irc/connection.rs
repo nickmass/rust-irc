@@ -77,48 +77,33 @@ impl IrcConnection {
         }
     }
 
-    pub fn start(self) {
+    pub fn start(self) -> (Sender<IrcMessage>, Receiver<IrcMessage>) {
         let mut writer = self.writer;
         let reader = self.reader;
         let (reader_tx, writer_rx): (Sender<IrcMessage>, Receiver<IrcMessage>) = channel();
         let ui_tx = reader_tx.clone();
+        let (reader_ui_tx, ui_rx): (Sender<IrcMessage>, Receiver<IrcMessage>) = channel();
 
-        thread::spawn(move || {
+        thread::Builder::new().name("irc_writer".to_string()).spawn(move || {
             for write_cmd in writer_rx {
                 parse_command(&write_cmd.message());
                 writer.send(&write_cmd);
             }
         });
 
-        thread::spawn(move || {
+        thread::Builder::new().name("irc_reader".to_string()).spawn(move || {
             for irc_msg in reader {
-                parse_command(&irc_msg.message());
                 match irc_msg.command() {
                     b"PING" => {
                         let _ =reader_tx.send(create_irc_message!(b"PONG", [ irc_msg.trailing().unwrap() ]));
                     },
                     _ => {},
                 }
+                reader_ui_tx.send(irc_msg);
             }
         });
 
-        thread::spawn(move || {
-            let stdin = io::stdin();
-            let stdin_lock = stdin.lock();
-            for in_line in stdin_lock.lines() {
-                let _ = in_line.and_then(|x| {
-                    match str::from_utf8(x.as_bytes()).unwrap() {
-                        "user" => {
-                            ui_tx.send(IrcMessage::test_user());
-                            ui_tx.send(IrcMessage::test_nick());
-                        },
-                        _ => {
-                        }
-                    }
-                    Ok(x)
-                });
-            }
-        });
+        (ui_tx, ui_rx)
     }
 }
 
