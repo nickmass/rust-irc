@@ -37,8 +37,8 @@ impl Default for IrcConnectionOptions {
     fn default() -> IrcConnectionOptions {
         IrcConnectionOptions {
             host: format!("{}", "localhost"),
-            port: 6697,
-            use_ssl:  true,
+            port: 6667,
+            use_ssl:  false,
         }
     }
 }

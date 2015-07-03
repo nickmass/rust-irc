@@ -24,8 +24,8 @@ fn main() {
     let stdin_lock = stdin.lock();
     for in_line in stdin_lock.lines() {
         let _ = in_line.and_then(|x| {
-            match str::from_utf8(x.as_bytes()).unwrap() {
-                "user" => {
+            match x.as_bytes() {
+                b"user" => {
                     tx.send(IrcMessage::test_user());
                     tx.send(IrcMessage::test_nick());
                 },
